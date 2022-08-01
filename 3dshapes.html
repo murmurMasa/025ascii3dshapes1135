@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>3D基本図形</title>
+<script src="three.js"></script>
+<script>
+var scene, camera, renderer;          //シーン、カメラ、レンダラー
+var mesh;                             //描画するオブジェクト
+
+function init() {
+    //画面サイズを取得（幅と高さを補正）
+    var width = window.innerWidth - 20;             //Ｗｅｂブラウザーの横幅と高さから選択フォーム部分などを引く
+    var height = window.innerHeight - 150;
+
+    //シーンの作成
+    scene = new THREE.Scene();                      //3Dグラフィックスの舞台であるシーンを作成
+
+    //ｶﾒﾗ（画角:50、ニアクリップ:1、ファークリップ:100）の作成と配置   
+    camera = new THREE.PerspectiveCamera(50, width/height, 1, 100); //カメラを作成
+    camera.position.set(0, 0, 10);                                   //カメラの一（x,y,z)を（0,0,10)に設定
+
+    //レンダラーの作成と配置
+    renderer = new THREE.WebGLRenderer();                           //3Dグラフィックスを描画するレンダラーを作成
+    renderer.setSize(width, height);                                //レンダラーのサイズを設定
+    document.getElementById("renderArea").appendChild(renderer.domElement); //レンダラーを配置
+
+    //ライト（平行光源、白）の作成と配置
+    var light = new THREE.DirectionalLight("#FFFFFF");              //白色のライトを作成
+    light.position.set(1, 1, 1);                                    //ライトの位置(X,Y,Z)を(1,1,1)に設定
+    scene.add(light);                                               //シーンにライトを追加
+
+    //オブジェクトの作成と描画
+    setMesh();                                                      //オブジェクトを作成、描画する関数
+}
+
+function setMesh() {
+    //選択されたオブジェクトの種類を取得
+    var meshTypeList = document.getElementById("meshType");         //図形選択ボックスのID
+    var meshType = meshTypeList.options[meshTypeList.selectedIndex].value;  //選んだ図形名を取得
+
+    //形状をセット
+    var geometry = new THREE.BoxGeometry(2, 2, 2);                  //立方体（デフォルト）を作成
+    if(meshType == "cone") geometry = new THREE.ConeGeometry(2, 4, 16);     //円すいを作成
+    if(meshType == "cylinder") geometry = new THREE.CylinderGeometry(2, 2, 4, 16);     //円柱を作成
+    if(meshType == "sphere") geometry = new THREE.SphereGeometry(2, 16, 16);     //球を作成
+    if(meshType == "torus") geometry = new THREE.TorusGeometry(2, 1, 16, 64);     //ドーナツ型を作成
+
+    //材質（色、鏡面反射光）をセット
+    var material = new THREE.MeshPhongMaterial({                    //材質を作成
+        color:document.getElementById("mColor").value,              //色を指定するテキストボックスのID
+        specular:document.getElementById("mSpecular").value,        //鏡面反射光の色を指定するテキストボックスのID
+        shininess:document.getElementById("mShininess").value
+    })
+
+    //オブジェクトの作成
+    if(mesh != null) scene.remove(mesh);                            //以前の図形を削除
+    mesh = new THREE.Mesh(geometry, material);                      //新しく図形を作成 形状、材質
+    scene.add(mesh);                                                //シーンに図形を追加
+
+    //描画
+    renderer.render(scene, camera);                                 //カメラ位置から見たシーンを描く
+}
+
+document.onkeydown = function(e) {                                  //何かキーが押されたら実行される関数
+    //Y軸を中心に回転
+    if((e.key == "ArrowLeft")||(e.key == "Left")) mesh.rotation.y -= 0.2;   //カーソルキーの←または→でY軸を0.2ラジアンずつ回転
+    if((e.key == "ArrowRight")||(e.key == "Right")) mesh.rotation.y += 0.2;
+
+    //X軸を中心に回転
+    if((e.key == "ArrowUp")||(e.key == "Up")) mesh.rotation.x -= 0.2;       //カーソルキーの↑または↓でX軸を0.2ラジアンずつ回転
+    if((e.key == "ArrowDown")||(e.key == "Down")) mesh.rotation.x += 0.2;
+
+    //カメラ位置（Z方向）を変更
+    if(e.key == "x") camera.position.z -= 0.1;                              //XまたはZキーでカメラのZ軸を移動＝図形が大きくなったり小さくなったりする
+    if(e.key == "z") camera.position.z += 0.1;
+
+    //描画
+    renderer.render(scene, camera);                                         //カメラ位置から見たシーンを描く
+}
+</script>
+<style>
+</style>
+</head>
+<body onload="init()">
+<p>3D基本図形</p>
+<form>
+オブジェクト：
+<select id="meshType">
+<option value="box">Box
+<option value="cone">Cone
+<option value="cylinder">Cylinder
+<option value="sphere">Sphere
+<option value="torus">Torus
+</select>
+color:<input type="text" id="mColor" value="#6699FF" size="8">
+specular:<input type="text" id="mSpecular" value="#999999" size="8">
+shininess:<input type="range" id="mShininess" value="30" min="1" max="200">
+<input type="button" value="形状や材質の変更" onclick="setMesh()">
+</form>
+<hr>
+<div id="renderArea"></div>
+方向キー：オブジェクトの回転、XZ：カメラの移動
+</body>
+</html>
